@@ -91,9 +91,7 @@ class PopupCalibrazione(tk.Toplevel):
         self.lbl_progresso.pack(side=tk.RIGHT)
 
         self.bind('<Control-s>', lambda e: self._cattura())
-        self.bind('<Control-S>', lambda e: self._cattura())
         self.bind('<Control-z>', lambda e: self._indietro())
-        self.bind('<Control-Z>', lambda e: self._indietro())
         self.bind('<Escape>', lambda e: self._fine())
         self.focus_set()
 
@@ -156,7 +154,7 @@ class GraffitiDrawer:
 
         self._crea_ui()
         self._aggiorna_stato()
-        keyboard.add_hotkey('ctrl+shift+x', self._annulla_globale)
+        keyboard.add_hotkey('ctrl+shift+x', lambda: self.root.after(0, self._annulla))
 
     def _carica_config(self):
         if os.path.exists(CONFIG_FILE):
@@ -335,7 +333,7 @@ class GraffitiDrawer:
             return
         try:
             w, h, off_x, off_y = self._compute_dims()
-            img = self.immagine.copy().resize((w, h), Image.LANCZOS)
+            img = self.immagine.resize((w, h), Image.LANCZOS)
 
             prev = Image.new('RGB', (w, h))
             px_in = img.load()
@@ -405,9 +403,6 @@ class GraffitiDrawer:
             self.lbl_stato.config(text='Annullato')
             self.btn_disegna.config(state=tk.NORMAL)
             self.btn_annulla.config(state=tk.DISABLED)
-
-    def _annulla_globale(self):
-        self.root.after(0, self._annulla)
 
     def _thread_disegno(self):
         try:
@@ -497,29 +492,27 @@ class GraffitiDrawer:
             self.root.after(0, lambda: self._fine_disegno(disegnati))
 
         except pyautogui.FailSafeException:
-            self.root.after(0, lambda: self._errore_disegno('Failsafe: mouse spostato in un angolo.'))
+            self.root.after(0, lambda: self._fine_disegno(errore='Failsafe: mouse spostato in un angolo.'))
         except Exception as e:
             import traceback
             traceback.print_exc()
-            self.root.after(0, lambda: self._errore_disegno(str(e)))
+            self.root.after(0, lambda: self._fine_disegno(errore=str(e)))
 
     def _aggiorna_progresso(self, valore):
         self.barra['value'] = valore
         self.lbl_stato.config(text=f'Disegnando... {valore} pixel')
 
-    def _fine_disegno(self, totale):
+    def _fine_disegno(self, totale=0, errore=None):
         self._disegnando = False
         self.btn_disegna.config(state=tk.NORMAL)
         self.btn_annulla.config(state=tk.DISABLED)
-        self.barra['value'] = totale
-        self.lbl_stato.config(text=f'Completato! {totale} pixel disegnati.')
-
-    def _errore_disegno(self, msg):
-        self._disegnando = False
-        self.btn_disegna.config(state=tk.NORMAL)
-        self.btn_annulla.config(state=tk.DISABLED)
-        self.lbl_stato.config(text='Errore')
-        messagebox.showerror('Errore disegno', msg)
+        if errore:
+            self.barra['value'] = 0
+            self.lbl_stato.config(text='Errore')
+            messagebox.showerror('Errore disegno', errore)
+        else:
+            self.barra['value'] = totale
+            self.lbl_stato.config(text=f'Completato! {totale} pixel disegnati.')
 
     def avvia(self):
         self.root.mainloop()
