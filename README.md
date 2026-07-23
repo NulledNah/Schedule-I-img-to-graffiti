@@ -4,7 +4,6 @@ Convert any image into in-game graffiti for Schedule I using mouse automation.
 
 ## Features
 
-- 8 colors (black, white, red, green, blue, yellow, magenta, brown)
 - 4 brush sizes with adaptive 3-pass drawing (fill → edge → detail)
 - Resizable drawing area with contain/stretch fit modes
 - Real-time resolution preview with slider
