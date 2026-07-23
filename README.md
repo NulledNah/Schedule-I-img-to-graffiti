@@ -4,7 +4,7 @@ Convert any image into in-game graffiti for Schedule I using mouse automation.
 
 ## Features
 
-- 4 brush sizes with adaptive 3-pass drawing (fill → edge → detail)
+- Adaptive 3-pass drawing (fill → edge → detail)
 - Resizable drawing area with contain/stretch fit modes
 - Real-time resolution preview with slider
 - Interactive calibration popup (CTRL+S to capture, CTRL+Z to undo)
