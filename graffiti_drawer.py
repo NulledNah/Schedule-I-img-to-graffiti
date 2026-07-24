@@ -477,13 +477,8 @@ class GraffitiDrawer:
                     c = grid[y][x]
                     if c == bg_color and skip_bg:
                         continue
-                    for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-                        ny, nx = y + dy, x + dx
-                        if 0 <= ny < img_h and 0 <= nx < img_w:
-                            if grid[ny][nx] != c or covered[ny][nx]:
-                                covered[y][x] = True
-                                l1.setdefault(c, []).append((x, y))
-                                break
+                    covered[y][x] = True
+                    l1.setdefault(c, []).append((x, y))
             if l1:
                 layers.append((1, l1))
 
