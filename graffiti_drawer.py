@@ -554,16 +554,8 @@ class GraffitiDrawer:
                             if not self._drawing:
                                 break
                             pyautogui.moveTo(sx, sy + ty)
-                            pyautogui.mouseDown()
-                            time.sleep(0.005)
-                            step = max(1, thickness)
-                            chunk_ms = max(0.001, stroke_speed * step)
-                            for cur_x in range(sx, sx + seg_w + 1, step):
-                                if not self._drawing:
-                                    break
-                                pyautogui.moveTo(min(cur_x, sx + seg_w), sy + ty)
-                                time.sleep(chunk_ms)
-                            pyautogui.mouseUp()
+                            dur = max(0.03, seg_w * stroke_speed)
+                            pyautogui.drag(seg_w, 0, duration=dur, button='left')
 
                         drawn += len(run)
                         if delay:
