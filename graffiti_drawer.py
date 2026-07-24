@@ -509,7 +509,7 @@ class GraffitiDrawer:
                         sx = ox + run[0][0] * thickness
                         sy = oy + run[0][1] * thickness
                         seg_w = len(run) * thickness
-                        duration = max(0.02, seg_w * 0.001)
+                        duration = max(0.01, seg_w * 0.0005)
 
                         for ty in range(brush_size):
                             if not self._drawing:
