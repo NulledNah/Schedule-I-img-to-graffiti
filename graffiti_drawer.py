@@ -543,6 +543,10 @@ class GraffitiDrawer:
                                 break
                             pydirectinput.moveTo(sx, sy + ty)
                             pydirectinput.mouseDown()
+                            stride = max(thickness * 4, seg_w // 8)
+                            for cur_x in range(sx, sx + seg_w, stride):
+                                pydirectinput.moveTo(min(cur_x, sx + seg_w), sy + ty)
+                                time.sleep(0.003)
                             pydirectinput.moveTo(sx + seg_w, sy + ty)
                             pydirectinput.mouseUp()
 
