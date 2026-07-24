@@ -504,8 +504,6 @@ class GraffitiDrawer:
                     pyautogui.click(self.config[key][0], self.config[key][1])
                     time.sleep(0.05)
 
-                lines_per_row = max(1, (thickness + brush_size - 1) // brush_size)
-
                 for color_name in colors_used:
                     if not self._drawing:
                         break
@@ -537,12 +535,12 @@ class GraffitiDrawer:
                         sy = oy + run[0][1] * thickness
                         seg_w = len(run) * thickness
 
-                        for ty in range(lines_per_row):
+                        for ty in range(brush_size):
                             if not self._drawing:
                                 break
                             pyautogui.moveTo(sx, sy + ty)
                             time.sleep(0.005)
-                            pyautogui.drag(seg_w, 0, duration=0.01, button='left')
+                            pyautogui.drag(seg_w, 0, duration=max(0.015, seg_w * 0.0005), button='left')
 
                         drawn += len(run)
                         if delay:
