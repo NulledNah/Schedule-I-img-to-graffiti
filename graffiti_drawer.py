@@ -554,7 +554,7 @@ class GraffitiDrawer:
                         for ty in range(lines_per_row):
                             if not self._drawing:
                                 break
-                            pyautogui.moveTo(sx, sy + ty)
+                            pydirectinput.moveTo(sx, sy + ty)
                             pydirectinput.mouseDown()
                             time.sleep(0.03)
                             step = max(1, thickness)
@@ -562,9 +562,9 @@ class GraffitiDrawer:
                             for cur_x in range(sx, sx + seg_w, step):
                                 if not self._drawing:
                                     break
-                                pyautogui.moveTo(min(cur_x, sx + seg_w), sy + ty)
+                                pydirectinput.moveTo(min(cur_x, sx + seg_w), sy + ty)
                                 time.sleep(dwell)
-                            pyautogui.moveTo(sx + seg_w, sy + ty)
+                            pydirectinput.moveTo(sx + seg_w, sy + ty)
                             pydirectinput.mouseUp()
 
                         drawn += len(run)
