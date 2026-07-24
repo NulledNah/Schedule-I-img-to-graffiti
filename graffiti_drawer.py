@@ -143,8 +143,8 @@ class GraffitiDrawer:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title('Schedule I - Graffiti Drawer')
-        self.root.geometry('420x650')
-        self.root.minsize(380, 560)
+        self.root.geometry('420x980')
+        self.root.minsize(380, 840)
         self.root.configure(bg='#151525')
 
         self.config = self._load_config()
@@ -195,7 +195,7 @@ class GraffitiDrawer:
         self.lbl_img = ttk.Label(r, text='None')
         self.lbl_img.pack(side=tk.LEFT, padx=8)
 
-        self.lbl_preview_img = tk.Label(f_img, bg='#1a1a2e', width=42, height=12)
+        self.lbl_preview_img = tk.Label(f_img, bg='#1a1a2e', width=42, height=18)
         self.lbl_preview_img.pack(pady=6)
         self.lbl_preview = ttk.Label(f_img, text='')
         self.lbl_preview.pack()
@@ -345,7 +345,7 @@ class GraffitiDrawer:
                 for x in range(w):
                     px_out[x, y] = COLORS[closest_color(px_in[x, y])]
 
-            scale = min(250 / w, 150 / h)
+            scale = min(280 / w, 200 / h)
             dw, dh = max(1, int(w * scale)), max(1, int(h * scale))
             prev = prev.resize((dw, dh), Image.NEAREST)
 
