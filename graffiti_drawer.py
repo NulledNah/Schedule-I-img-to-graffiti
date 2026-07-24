@@ -265,14 +265,14 @@ class GraffitiDrawer:
         r_speed = ttk.Frame(f_set)
         r_speed.pack(fill=tk.X, pady=2)
         ttk.Label(r_speed, text='Stroke speed:').pack(side=tk.LEFT)
-        self.var_speed = tk.IntVar(value=20)
-        tk.Scale(r_speed, from_=5, to=100, orient=tk.HORIZONTAL, variable=self.var_speed,
+        self.var_speed = tk.IntVar(value=5)
+        tk.Scale(r_speed, from_=1, to=20, orient=tk.HORIZONTAL, variable=self.var_speed,
                  bg='#1e1e3a', fg='#ddd', troughcolor='#2a2a4a', highlightthickness=0,
                  length=160).pack(side=tk.LEFT, padx=6, fill=tk.X, expand=True)
-        self.lbl_speed_val = ttk.Label(r_speed, text='20ms')
+        self.lbl_speed_val = ttk.Label(r_speed, text='5ms/px')
         self.lbl_speed_val.pack(side=tk.LEFT, padx=2)
         self.var_speed.trace_add('write', lambda *a: self.lbl_speed_val.config(
-            text=f'{self.var_speed.get()}ms'))
+            text=f'{self.var_speed.get()}ms/px'))
 
         r4 = ttk.Frame(f_set)
         r4.pack(fill=tk.X, pady=2)
@@ -425,7 +425,7 @@ class GraffitiDrawer:
             thickness = self.var_thickness.get()
             delay = self.var_delay.get() / 1000.0
             countdown = self.var_cd.get()
-            stroke_speed = self.var_speed.get() / 1000.0
+            stroke_speed = self.var_speed.get() / 1000.0  # ms per screen pixel
             skip_bg = self.var_skip_bg.get()
             ox, oy = tl[0], tl[1]
 
@@ -555,7 +555,7 @@ class GraffitiDrawer:
                                 break
                             pyautogui.moveTo(sx, sy + ty)
                             time.sleep(0.005)
-                            pyautogui.drag(seg_w, 0, duration=stroke_speed, button='left')
+                            pyautogui.drag(seg_w, 0, duration=max(0.01, seg_w * stroke_speed), button='left')
 
                         drawn += len(run)
                         if delay:
