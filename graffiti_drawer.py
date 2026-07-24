@@ -555,9 +555,9 @@ class GraffitiDrawer:
                             if not self._drawing:
                                 break
                             stride = max(1, thickness * speed)
-                            pydirectinput.moveTo(max(0, sx - stride), sy + ty)
+                            pydirectinput.moveTo(sx, sy + ty)
                             pydirectinput.mouseDown()
-                            stride = max(1, min(thickness * speed, seg_w // 12, 15))
+                            stride = max(1, thickness * speed)
                             for cur_x in range(sx, sx + seg_w + 1, stride):
                                 if not self._drawing:
                                     break
