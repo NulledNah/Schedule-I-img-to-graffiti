@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import pyautogui
+import pydirectinput
 import json
 import os
 import time
@@ -514,7 +515,7 @@ class GraffitiDrawer:
 
                 key = f'thickness_{brush_size}'
                 if key in self.config:
-                    pyautogui.click(self.config[key][0], self.config[key][1])
+                    pydirectinput.click(self.config[key][0], self.config[key][1])
                     time.sleep(0.05)
 
                 lines_per_row = max(1, (thickness + brush_size - 1) // brush_size)
@@ -528,7 +529,7 @@ class GraffitiDrawer:
 
                     if color_name in self.config:
                         cx, cy = self.config[color_name]
-                        pyautogui.click(cx, cy)
+                        pydirectinput.click(cx, cy)
                         time.sleep(0.03)
 
                     cp.sort(key=lambda p: (p[1], p[0]))
@@ -554,7 +555,7 @@ class GraffitiDrawer:
                             if not self._drawing:
                                 break
                             pyautogui.moveTo(sx, sy + ty)
-                            pyautogui.mouseDown()
+                            pydirectinput.mouseDown()
                             time.sleep(0.03)
                             step = max(1, thickness)
                             dwell = max(0.005, stroke_speed * step)
@@ -564,7 +565,7 @@ class GraffitiDrawer:
                                 pyautogui.moveTo(min(cur_x, sx + seg_w), sy + ty)
                                 time.sleep(dwell)
                             pyautogui.moveTo(sx + seg_w, sy + ty)
-                            pyautogui.mouseUp()
+                            pydirectinput.mouseUp()
 
                         drawn += len(run)
                         if delay:
