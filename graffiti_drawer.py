@@ -557,11 +557,8 @@ class GraffitiDrawer:
                             stride = max(1, thickness * speed)
                             pydirectinput.moveTo(sx, sy + ty)
                             pydirectinput.mouseDown()
-                            stride = max(1, thickness * speed)
-                            for cur_x in range(sx, sx + seg_w + 1, stride):
-                                if not self._drawing:
-                                    break
-                                pydirectinput.moveTo(min(cur_x, sx + seg_w), sy + ty)
+                            dur = max(0.005, seg_w * 0.0003 / speed)
+                            pyautogui.moveTo(sx + seg_w, sy + ty, duration=dur)
                             pydirectinput.mouseUp()
 
                         drawn += len(run)
