@@ -267,7 +267,7 @@ class GraffitiDrawer:
         r_speed.pack(fill=tk.X, pady=2)
         ttk.Label(r_speed, text='Speed:').pack(side=tk.LEFT)
         self.var_speed = tk.IntVar(value=1)
-        tk.Scale(r_speed, from_=1, to=10, orient=tk.HORIZONTAL, variable=self.var_speed,
+        tk.Scale(r_speed, from_=1, to=20, orient=tk.HORIZONTAL, variable=self.var_speed,
                  bg='#1e1e3a', fg='#ddd', troughcolor='#2a2a4a', highlightthickness=0,
                  length=160).pack(side=tk.LEFT, padx=6, fill=tk.X, expand=True)
         self.lbl_speed_val = ttk.Label(r_speed, text='1x')
@@ -557,6 +557,7 @@ class GraffitiDrawer:
                             stride = max(1, thickness * speed)
                             pydirectinput.moveTo(max(0, sx - stride), sy + ty)
                             pydirectinput.mouseDown()
+                            stride = max(1, min(thickness * speed, seg_w // 4))
                             for cur_x in range(sx, sx + seg_w + 1, stride):
                                 if not self._drawing:
                                     break
