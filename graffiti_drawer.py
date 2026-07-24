@@ -144,8 +144,8 @@ class GraffitiDrawer:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title('Schedule I - Graffiti Drawer')
-        self.root.geometry('420x950')
-        self.root.minsize(380, 810)
+        self.root.geometry('420x1020')
+        self.root.minsize(380, 880)
         self.root.configure(bg='#151525')
 
         self.config = self._load_config()
@@ -262,6 +262,18 @@ class GraffitiDrawer:
         ttk.Label(r3, text='Delay (ms):').pack(side=tk.LEFT)
         self.var_delay = tk.IntVar(value=0)
         ttk.Spinbox(r3, from_=0, to=100, textvariable=self.var_delay, width=5).pack(side=tk.LEFT, padx=6)
+
+        r_speed = ttk.Frame(f_set)
+        r_speed.pack(fill=tk.X, pady=2)
+        ttk.Label(r_speed, text='Speed:').pack(side=tk.LEFT)
+        self.var_speed = tk.IntVar(value=1)
+        tk.Scale(r_speed, from_=1, to=10, orient=tk.HORIZONTAL, variable=self.var_speed,
+                 bg='#1e1e3a', fg='#ddd', troughcolor='#2a2a4a', highlightthickness=0,
+                 length=160).pack(side=tk.LEFT, padx=6, fill=tk.X, expand=True)
+        self.lbl_speed_val = ttk.Label(r_speed, text='1x')
+        self.lbl_speed_val.pack(side=tk.LEFT, padx=2)
+        self.var_speed.trace_add('write', lambda *a: self.lbl_speed_val.config(
+            text=f'{self.var_speed.get()}x'))
 
         r4 = ttk.Frame(f_set)
         r4.pack(fill=tk.X, pady=2)
@@ -414,6 +426,7 @@ class GraffitiDrawer:
             thickness = self.var_thickness.get()
             delay = self.var_delay.get() / 1000.0
             countdown = self.var_cd.get()
+            speed = self.var_speed.get()
             skip_bg = self.var_skip_bg.get()
             ox, oy = tl[0], tl[1]
 
@@ -543,7 +556,8 @@ class GraffitiDrawer:
                                 break
                             pydirectinput.moveTo(sx, sy + ty)
                             pydirectinput.mouseDown()
-                            for cur_x in range(sx, sx + seg_w + 1, max(1, thickness)):
+                            stride = max(1, thickness * speed)
+                            for cur_x in range(sx, sx + seg_w + 1, stride):
                                 if not self._drawing:
                                     break
                                 pydirectinput.moveTo(min(cur_x, sx + seg_w), sy + ty)
