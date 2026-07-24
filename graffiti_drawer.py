@@ -265,11 +265,11 @@ class GraffitiDrawer:
         r_speed = ttk.Frame(f_set)
         r_speed.pack(fill=tk.X, pady=2)
         ttk.Label(r_speed, text='Stroke speed:').pack(side=tk.LEFT)
-        self.var_speed = tk.IntVar(value=5)
-        tk.Scale(r_speed, from_=1, to=20, orient=tk.HORIZONTAL, variable=self.var_speed,
+        self.var_speed = tk.IntVar(value=10)
+        tk.Scale(r_speed, from_=1, to=100, orient=tk.HORIZONTAL, variable=self.var_speed,
                  bg='#1e1e3a', fg='#ddd', troughcolor='#2a2a4a', highlightthickness=0,
                  length=160).pack(side=tk.LEFT, padx=6, fill=tk.X, expand=True)
-        self.lbl_speed_val = ttk.Label(r_speed, text='5ms/px')
+        self.lbl_speed_val = ttk.Label(r_speed, text='10ms/px')
         self.lbl_speed_val.pack(side=tk.LEFT, padx=2)
         self.var_speed.trace_add('write', lambda *a: self.lbl_speed_val.config(
             text=f'{self.var_speed.get()}ms/px'))
@@ -556,8 +556,14 @@ class GraffitiDrawer:
                             pyautogui.moveTo(sx, sy + ty)
                             pyautogui.mouseDown()
                             time.sleep(0.03)
-                            dur = max(0.03, seg_w * stroke_speed)
-                            pyautogui.moveTo(sx + seg_w, sy + ty, duration=dur)
+                            step = max(1, thickness)
+                            dwell = max(0.005, stroke_speed * step)
+                            for cur_x in range(sx, sx + seg_w, step):
+                                if not self._drawing:
+                                    break
+                                pyautogui.moveTo(min(cur_x, sx + seg_w), sy + ty)
+                                time.sleep(dwell)
+                            pyautogui.moveTo(sx + seg_w, sy + ty)
                             pyautogui.mouseUp()
 
                         drawn += len(run)
