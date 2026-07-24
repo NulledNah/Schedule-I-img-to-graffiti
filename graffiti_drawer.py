@@ -30,7 +30,8 @@ def closest_color(pixel):
     r, g, b = pixel[:3]
     best, best_d = None, float('inf')
     for name, (cr, cg, cb) in COLORS.items():
-        d = (r - cr)**2 + (g - cg)**2 + (b - cb)**2
+        dr, dg, db = r - cr, g - cg, b - cb
+        d = 2*dr*dr + 4*dg*dg + 3*db*db
         if d < best_d:
             best_d, best = d, name
     return best
@@ -142,8 +143,8 @@ class GraffitiDrawer:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title('Schedule I - Graffiti Drawer')
-        self.root.geometry('420x620')
-        self.root.minsize(380, 540)
+        self.root.geometry('420x650')
+        self.root.minsize(380, 560)
         self.root.configure(bg='#151525')
 
         self.config = self._load_config()
@@ -183,6 +184,7 @@ class GraffitiDrawer:
         style.configure('TLabelframe', background='#151525', foreground='#aaa')
         style.configure('TLabelframe.Label', background='#151525', foreground='#999')
         style.configure('TButton', background='#1e1e3a', foreground='#ddd')
+        style.configure('TCheckbutton', background='#151525', foreground='#ddd')
 
         f_img = ttk.LabelFrame(self.root, text=' Image ', padding=8)
         f_img.pack(fill=tk.X, **p)
@@ -246,6 +248,13 @@ class GraffitiDrawer:
                         value='contain', command=self._update_preview).pack(side=tk.LEFT, padx=4)
         ttk.Radiobutton(r_fit, text='Stretch (fill area)', variable=self.var_fit,
                         value='stretch', command=self._update_preview).pack(side=tk.LEFT, padx=4)
+
+        r_skip = ttk.Frame(f_set)
+        r_skip.pack(fill=tk.X, pady=2)
+        self.var_skip_bg = tk.BooleanVar(value=True)
+        ttk.Checkbutton(r_skip, text='Skip background color',
+                        variable=self.var_skip_bg,
+                        command=self._update_preview).pack(side=tk.LEFT)
 
         r3 = ttk.Frame(f_set)
         r3.pack(fill=tk.X, pady=2)
@@ -404,6 +413,7 @@ class GraffitiDrawer:
             thickness = self.var_thickness.get()
             delay = self.var_delay.get() / 1000.0
             countdown = self.var_cd.get()
+            skip_bg = self.var_skip_bg.get()
             ox, oy = tl[0], tl[1]
 
             img_w, img_h, off_x, off_y = self._compute_dims()
@@ -414,8 +424,14 @@ class GraffitiDrawer:
             pixels = img.load()
 
             grid = [[closest_color(pixels[x, y]) for x in range(img_w)] for y in range(img_h)]
-            colors_used = sorted(set(p for row in grid for p in row),
-                                 key=lambda c: sum(row.count(c) for row in grid), reverse=True)
+            color_counts = {}
+            for row in grid:
+                for c in row:
+                    color_counts[c] = color_counts.get(c, 0) + 1
+            colors_used = sorted(color_counts, key=color_counts.get, reverse=True)
+            bg_color = colors_used[0] if colors_used else None
+            if skip_bg and bg_color:
+                colors_used = [c for c in colors_used if c != bg_color] or colors_used
             total = img_w * img_h
 
             covered = [[False] * img_w for _ in range(img_h)]
@@ -425,6 +441,8 @@ class GraffitiDrawer:
             for by in range(0, img_h - img_h % 4, 4):
                 for bx in range(0, img_w - img_w % 4, 4):
                     c = grid[by][bx]
+                    if c == bg_color and skip_bg:
+                        continue
                     if all(grid[by+dy][bx+dx] == c for dy in range(4) for dx in range(4)):
                         for dy in range(4):
                             for dx in range(4):
@@ -435,25 +453,37 @@ class GraffitiDrawer:
                 layers.append((4, l4))
 
             l2 = {}
-            for y in range(img_h):
-                for x in range(img_w):
-                    if covered[y][x]:
+            for by in range(0, img_h - img_h % 2, 2):
+                for bx in range(0, img_w - img_w % 2, 2):
+                    if all(covered[by+dy][bx+dx] for dy in range(2) for dx in range(2)):
                         continue
-                    c = grid[y][x]
-                    for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-                        ny, nx = y + dy, x + dx
-                        if 0 <= ny < img_h and 0 <= nx < img_w and grid[ny][nx] != c:
-                            covered[y][x] = True
-                            l2.setdefault(c, []).append((x, y))
-                            break
+                    c = grid[by][bx]
+                    if c == bg_color and skip_bg:
+                        continue
+                    if all(grid[by+dy][bx+dx] == c for dy in range(2) for dx in range(2)):
+                        for dy in range(2):
+                            for dx in range(2):
+                                covered[by+dy][bx+dx] = True
+                        l2.setdefault(c, []).extend(
+                            (bx+dx, by+dy) for dy in range(2) for dx in range(2))
             if l2:
                 layers.append((2, l2))
 
             l1 = {}
             for y in range(img_h):
                 for x in range(img_w):
-                    if not covered[y][x]:
-                        l1.setdefault(grid[y][x], []).append((x, y))
+                    if covered[y][x]:
+                        continue
+                    c = grid[y][x]
+                    if c == bg_color and skip_bg:
+                        continue
+                    for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                        ny, nx = y + dy, x + dx
+                        if 0 <= ny < img_h and 0 <= nx < img_w:
+                            if grid[ny][nx] != c or covered[ny][nx]:
+                                covered[y][x] = True
+                                l1.setdefault(c, []).append((x, y))
+                                break
             if l1:
                 layers.append((1, l1))
 
@@ -478,6 +508,8 @@ class GraffitiDrawer:
                 if key in self.config:
                     pyautogui.click(self.config[key][0], self.config[key][1])
                     time.sleep(0.05)
+
+                lines_per_row = max(1, (thickness + brush_size - 1) // brush_size)
 
                 for color_name in colors_used:
                     if not self._drawing:
@@ -509,13 +541,13 @@ class GraffitiDrawer:
                         sx = ox + run[0][0] * thickness
                         sy = oy + run[0][1] * thickness
                         seg_w = len(run) * thickness
-                        duration = max(0.01, seg_w * 0.0005)
 
-                        for ty in range(brush_size):
+                        for ty in range(lines_per_row):
                             if not self._drawing:
                                 break
                             pyautogui.moveTo(sx, sy + ty)
-                            pyautogui.drag(seg_w, 0, duration=duration, button='left')
+                            time.sleep(0.005)
+                            pyautogui.drag(seg_w, 0, duration=0.01, button='left')
 
                         drawn += len(run)
                         if delay:
