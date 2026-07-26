@@ -450,52 +450,55 @@ class GraffitiDrawer:
             total = img_w * img_h
 
             covered = [[False] * img_w for _ in range(img_h)]
-            layers = []
 
-            l4 = {}
-            for by in range(0, img_h - img_h % 4, 4):
-                for bx in range(0, img_w - img_w % 4, 4):
-                    c = grid[by][bx]
-                    if c == bg_color and skip_bg:
-                        continue
-                    if all(grid[by+dy][bx+dx] == c for dy in range(4) for dx in range(4)):
-                        for dy in range(4):
-                            for dx in range(4):
-                                covered[by+dy][bx+dx] = True
-                        l4.setdefault(c, []).extend(
-                            (bx+dx, by+dy) for dy in range(4) for dx in range(4))
-            if l4:
-                layers.append((4, l4))
-
-            l2 = {}
-            for by in range(0, img_h - img_h % 2, 2):
-                for bx in range(0, img_w - img_w % 2, 2):
-                    if all(covered[by+dy][bx+dx] for dy in range(2) for dx in range(2)):
-                        continue
-                    c = grid[by][bx]
-                    if c == bg_color and skip_bg:
-                        continue
-                    if all(grid[by+dy][bx+dx] == c for dy in range(2) for dx in range(2)):
-                        for dy in range(2):
-                            for dx in range(2):
-                                covered[by+dy][bx+dx] = True
-                        l2.setdefault(c, []).extend(
-                            (bx+dx, by+dy) for dy in range(2) for dx in range(2))
-            if l2:
-                layers.append((2, l2))
-
-            l1 = {}
+            edge_mask = [[False] * img_w for _ in range(img_h)]
             for y in range(img_h):
                 for x in range(img_w):
+                    c = grid[y][x]
+                    if c == bg_color and skip_bg:
+                        continue
+                    for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                        ny, nx = y + dy, x + dx
+                        if 0 <= ny < img_h and 0 <= nx < img_w and grid[ny][nx] != c:
+                            edge_mask[y][x] = True
+                            break
+
+            visited = [[False] * img_w for _ in range(img_h)]
+            edge_paths = {}
+            for y in range(img_h):
+                for x in range(img_w):
+                    if edge_mask[y][x] and not visited[y][x]:
+                        c = grid[y][x]
+                        comp = []
+                        queue = [(x, y)]
+                        while queue:
+                            px, py = queue.pop()
+                            if visited[py][px]:
+                                continue
+                            visited[py][px] = True
+                            covered[py][px] = True
+                            comp.append((px, py))
+                            for dy, dx in ((-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)):
+                                nx, ny = px + dx, py + dy
+                                if 0 <= nx < img_w and 0 <= ny < img_h and edge_mask[ny][nx] and not visited[ny][nx] and grid[ny][nx] == c:
+                                    queue.append((nx, ny))
+                        comp.sort(key=lambda p: (p[1], p[0]))
+                        edge_paths.setdefault(c, []).append(comp)
+            layers = [(1, edge_paths)] if edge_paths else []
+
+            fill = {}
+            stride = max(1, round(BRUSH_RADIUS[4]))
+            for y in range(0, img_h, stride):
+                for x in range(0, img_w, stride):
                     if covered[y][x]:
                         continue
                     c = grid[y][x]
                     if c == bg_color and skip_bg:
                         continue
                     covered[y][x] = True
-                    l1.setdefault(c, []).append((x, y))
-            if l1:
-                layers.append((1, l1))
+                    fill.setdefault(c, []).append((x, y))
+            if fill:
+                layers.append((4, fill))
 
             self.root.after(0, lambda: self.bar.configure(maximum=total))
 
@@ -519,13 +522,11 @@ class GraffitiDrawer:
                     pydirectinput.click(self.config[key][0], self.config[key][1])
                     time.sleep(0.05)
 
-                lines_per_row = max(1, round(thickness / BRUSH_RADIUS[brush_size]))
-
                 for color_name in colors_used:
                     if not self._drawing:
                         break
-                    cp = layer.get(color_name)
-                    if not cp:
+                    data = layer.get(color_name)
+                    if not data:
                         continue
 
                     if color_name in self.config:
@@ -533,42 +534,39 @@ class GraffitiDrawer:
                         pydirectinput.click(cx, cy)
                         time.sleep(0.03)
 
-                    cp.sort(key=lambda p: (p[1], p[0]))
-                    runs = []
-                    cur = []
-                    for px, py_ in cp:
-                        if cur and (py_ != cur[-1][1] or px != cur[-1][0] + 1):
-                            runs.append(cur)
-                            cur = []
-                        cur.append((px, py_))
-                    if cur:
-                        runs.append(cur)
-
-                    for run in runs:
-                        if not self._drawing:
-                            break
-
-                        sx = ox + run[0][0] * thickness
-                        sy = oy + run[0][1] * thickness
-                        seg_w = len(run) * thickness
-
-                        for ty in range(lines_per_row):
+                    if brush_size == 1:
+                        for path in data:
+                            if not self._drawing or len(path) < 2:
+                                break
+                            sx = ox + path[0][0] * thickness
+                            sy = oy + path[0][1] * thickness
+                            pydirectinput.moveTo(sx, sy)
+                            pydirectinput.mouseDown()
+                            dur = max(0.003, len(path) * thickness * 0.00005 / speed)
+                            for px, py_ in path[1:]:
+                                pydirectinput.moveTo(ox + px * thickness, oy + py_ * thickness)
+                            pyautogui.moveTo(ox + path[-1][0] * thickness, oy + path[-1][1] * thickness, duration=dur)
+                            pydirectinput.mouseUp()
+                            drawn += len(path)
+                            if delay:
+                                time.sleep(delay)
+                            if drawn % 50 == 0:
+                                d = drawn
+                                self.root.after(0, lambda v=d: self._update_progress(v))
+                    else:
+                        for px, py_ in data:
                             if not self._drawing:
                                 break
-                            stride = max(1, thickness * speed)
-                            pydirectinput.moveTo(sx, sy + ty)
-                            pydirectinput.mouseDown()
-                            dur = max(0.002, seg_w * 0.0001 / speed)
-                            pyautogui.moveTo(sx + seg_w, sy + ty, duration=dur)
-                            pydirectinput.mouseUp()
-
-                        drawn += len(run)
-                        if delay:
-                            time.sleep(delay)
-
-                        if drawn % 50 == 0:
-                            d = drawn
-                            self.root.after(0, lambda v=d: self._update_progress(v))
+                            sx = ox + px * thickness
+                            sy = oy + py_ * thickness
+                            pydirectinput.moveTo(sx, sy)
+                            pydirectinput.click()
+                            drawn += 1
+                            if delay:
+                                time.sleep(delay)
+                            if drawn % 50 == 0:
+                                d = drawn
+                                self.root.after(0, lambda v=d: self._update_progress(v))
 
                     time.sleep(0.02)
 
