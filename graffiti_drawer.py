@@ -23,6 +23,7 @@ COLORS = {
     'brown':   (139, 69, 19),
 }
 
+COLOR_NAMES = list(COLORS.keys())
 BRUSH_RADIUS = {1: 1.0, 2: 3.33, 3: 9.33, 4: 12.67}
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 
