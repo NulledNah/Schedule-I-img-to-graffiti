@@ -487,15 +487,14 @@ class GraffitiDrawer:
             layers = [(1, edge_paths)] if edge_paths else []
 
             fill = {}
-            stride = max(1, round(BRUSH_RADIUS[4]))
-            for y in range(0, img_h, stride):
-                for x in range(0, img_w, stride):
+            fstride = max(1, round(BRUSH_RADIUS[4]))
+            for y in range(0, img_h, fstride):
+                for x in range(0, img_w, fstride):
                     if covered[y][x]:
                         continue
                     c = grid[y][x]
                     if c == bg_color and skip_bg:
                         continue
-                    covered[y][x] = True
                     fill.setdefault(c, []).append((x, y))
             if fill:
                 layers.append((4, fill))
@@ -536,8 +535,10 @@ class GraffitiDrawer:
 
                     if brush_size == 1:
                         for path in data:
-                            if not self._drawing or len(path) < 2:
+                            if not self._drawing:
                                 break
+                            if len(path) < 2:
+                                continue
                             sx = ox + path[0][0] * thickness
                             sy = oy + path[0][1] * thickness
                             pydirectinput.moveTo(sx, sy)
@@ -560,7 +561,9 @@ class GraffitiDrawer:
                             sx = ox + px * thickness
                             sy = oy + py_ * thickness
                             pydirectinput.moveTo(sx, sy)
-                            pydirectinput.click()
+                            pydirectinput.mouseDown()
+                            pydirectinput.moveTo(sx + thickness, sy)
+                            pydirectinput.mouseUp()
                             drawn += 1
                             if delay:
                                 time.sleep(delay)
