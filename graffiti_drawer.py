@@ -23,7 +23,7 @@ COLORS = {
     'brown':   (139, 69, 19),
 }
 
-COLOR_NAMES = list(COLORS.keys())
+BRUSH_RADIUS = {1: 1.0, 2: 3.33, 3: 9.33, 4: 12.67}
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 
 
@@ -267,7 +267,7 @@ class GraffitiDrawer:
         r_speed.pack(fill=tk.X, pady=2)
         ttk.Label(r_speed, text='Speed:').pack(side=tk.LEFT)
         self.var_speed = tk.IntVar(value=1)
-        tk.Scale(r_speed, from_=1, to=20, orient=tk.HORIZONTAL, variable=self.var_speed,
+        tk.Scale(r_speed, from_=1, to=100, orient=tk.HORIZONTAL, variable=self.var_speed,
                  bg='#1e1e3a', fg='#ddd', troughcolor='#2a2a4a', highlightthickness=0,
                  length=160).pack(side=tk.LEFT, padx=6, fill=tk.X, expand=True)
         self.lbl_speed_val = ttk.Label(r_speed, text='1x')
@@ -518,7 +518,7 @@ class GraffitiDrawer:
                     pydirectinput.click(self.config[key][0], self.config[key][1])
                     time.sleep(0.05)
 
-                lines_per_row = max(1, (thickness + brush_size - 1) // brush_size)
+                lines_per_row = max(1, round(thickness / BRUSH_RADIUS[brush_size]))
 
                 for color_name in colors_used:
                     if not self._drawing:
@@ -557,7 +557,7 @@ class GraffitiDrawer:
                             stride = max(1, thickness * speed)
                             pydirectinput.moveTo(sx, sy + ty)
                             pydirectinput.mouseDown()
-                            dur = max(0.005, seg_w * 0.0003 / speed)
+                            dur = max(0.002, seg_w * 0.0001 / speed)
                             pyautogui.moveTo(sx + seg_w, sy + ty, duration=dur)
                             pydirectinput.mouseUp()
 
